@@ -7,6 +7,11 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>ASSISTENTE DI LETTURA</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
     <style>
         * {
             margin: 0;
@@ -253,11 +258,13 @@
     <div class="container">
         <h1>📚 ASSISTENTE DI LETTURA</h1>
 
-        <!-- Camera Section -->
+        <!-- File Input Section -->
         <div class="section">
-            <div class="section-title">📸 CATTURA IMMAGINE</div>
-            <input type="file" id="cameraInput" accept="image/*" capture="environment">
-            <button class="btn-primary" onclick="openCamera()">SCATTA FOTO</button>
+            <div class="section-title">📁 CARICA FILE</div>
+            <input type="file" id="cameraInput" accept="image/*,application/pdf" capture="environment" style="display: none;">
+            <input type="file" id="fileInput" accept="image/*,application/pdf" style="display: none;">
+            <button class="btn-primary" onclick="openCamera()">📸 SCATTA FOTO</button>
+            <button class="btn-primary" onclick="openFile()">📄 CARICA IMMAGINE/PDF</button>
             <img id="preview" alt="Anteprima">
             <div id="progressBar" class="progress-bar">
                 <div id="progressFill" class="progress-fill">0%</div>
@@ -304,9 +311,20 @@
             document.getElementById('cameraInput').click();
         }
 
-        document.getElementById('cameraInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
+        function openFile() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileSelection(file) {
+            if (!file) return;
+
+            const fileType = file.type;
+            
+            if (fileType === 'application/pdf') {
+                // Handle PDF
+                processPDF(file);
+            } else if (fileType.startsWith('image/')) {
+                // Handle image
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     const preview = document.getElementById('preview');
@@ -317,8 +335,71 @@
                     processImage(event.target.result);
                 };
                 reader.readAsDataURL(file);
+            } else {
+                alert('FORMATO FILE NON SUPPORTATO. USA IMMAGINI O PDF.');
             }
+        }
+
+        document.getElementById('cameraInput').addEventListener('change', function(e) {
+            handleFileSelection(e.target.files[0]);
         });
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            handleFileSelection(e.target.files[0]);
+        });
+
+        async function processPDF(file) {
+            const loading = document.getElementById('loading');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            
+            loading.classList.remove('hidden');
+            progressBar.style.display = 'block';
+            progressFill.style.width = '50%';
+            progressFill.textContent = 'ELABORAZIONE PDF...';
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                
+                let fullText = '';
+                const numPages = pdf.numPages;
+                
+                // Extract text from all pages
+                for (let i = 1; i <= numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + ' ';
+                    
+                    // Update progress
+                    const percent = Math.round((i / numPages) * 100);
+                    progressFill.style.width = percent + '%';
+                    progressFill.textContent = `PAGINA ${i}/${numPages}`;
+                }
+
+                // Display extracted text in uppercase
+                const extractedText = fullText.trim().toUpperCase();
+                document.getElementById('extractedText').textContent = extractedText;
+                document.getElementById('textSection').classList.remove('hidden');
+
+                // Generate study aids
+                generateStudyAids(extractedText);
+
+                // Hide preview for PDFs
+                document.getElementById('preview').style.display = 'none';
+
+                loading.classList.add('hidden');
+                progressBar.style.display = 'none';
+                progressFill.style.width = '0%';
+                progressFill.textContent = '0%';
+            } catch (error) {
+                loading.classList.add('hidden');
+                progressBar.style.display = 'none';
+                alert('ERRORE NELL\'ELABORAZIONE DEL PDF. RIPROVA.');
+                console.error(error);
+            }
+        }
 
         async function processImage(imageSrc) {
             const loading = document.getElementById('loading');
