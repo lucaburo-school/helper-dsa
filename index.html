@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>ASSISTENTE DI LETTURA</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+            color: #000;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            font-size: 28px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid #667eea;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button {
+            width: 100%;
+            padding: 18px;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            touch-action: manipulation;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover, .btn-primary:active {
+            background: #5568d3;
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover, .btn-secondary:active {
+            background: #38a169;
+            transform: scale(0.98);
+        }
+
+        .btn-tertiary {
+            background: #ed8936;
+            color: white;
+        }
+
+        .btn-tertiary:hover, .btn-tertiary:active {
+            background: #dd6b20;
+            transform: scale(0.98);
+        }
+
+        #cameraInput {
+            display: none;
+        }
+
+        #preview {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: none;
+            border: 2px solid #667eea;
+        }
+
+        .text-display {
+            background: #fffbeb;
+            border: 3px solid #000;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 22px;
+            line-height: 1.8;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-family: 'Comic Sans MS', 'Arial Black', sans-serif;
+            color: #000;
+            min-height: 150px;
+            word-wrap: break-word;
+            letter-spacing: 1.5px;
+        }
+
+        .keywords-display {
+            background: #e6fffa;
+            border: 3px solid #319795;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 20px;
+            line-height: 1.8;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-family: 'Comic Sans MS', 'Arial Black', sans-serif;
+            color: #000;
+            min-height: 100px;
+            letter-spacing: 1.5px;
+        }
+
+        .keyword-tag {
+            display: inline-block;
+            background: #319795;
+            color: white;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 20px;
+            font-size: 18px;
+        }
+
+        .schema-display {
+            background: #fef5e7;
+            border: 3px solid #d68910;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+            font-size: 18px;
+            line-height: 1.8;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-family: 'Comic Sans MS', 'Arial Black', sans-serif;
+            color: #000;
+            letter-spacing: 1.5px;
+        }
+
+        .schema-item {
+            margin: 10px 0;
+            padding-left: 20px;
+            border-left: 5px solid #d68910;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            color: #667eea;
+            font-weight: bold;
+            padding: 20px;
+            text-transform: uppercase;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .controls button {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 24px;
+            }
+
+            .section-title {
+                font-size: 18px;
+            }
+
+            button {
+                font-size: 16px;
+                padding: 15px;
+            }
+
+            .text-display, .keywords-display, .schema-display {
+                font-size: 18px;
+            }
+
+            .keyword-tag {
+                font-size: 16px;
+            }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 ASSISTENTE DI LETTURA</h1>
+
+        <!-- Camera Section -->
+        <div class="section">
+            <div class="section-title">📸 CATTURA IMMAGINE</div>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment">
+            <button class="btn-primary" onclick="openCamera()">SCATTA FOTO</button>
+            <img id="preview" alt="Anteprima">
+            <div id="progressBar" class="progress-bar">
+                <div id="progressFill" class="progress-fill">0%</div>
+            </div>
+        </div>
+
+        <!-- Extracted Text Section -->
+        <div id="textSection" class="section hidden">
+            <div class="section-title">📖 TESTO ESTRATTO</div>
+            <div id="extractedText" class="text-display"></div>
+            <div class="controls">
+                <button class="btn-secondary" onclick="readText('extractedText')">🔊 LEGGI TESTO</button>
+                <button class="btn-secondary" onclick="stopReading()">⏹️ FERMA</button>
+            </div>
+        </div>
+
+        <!-- Study Aids Section -->
+        <div id="studySection" class="section hidden">
+            <div class="section-title">🎯 SUPPORTO ALLO STUDIO</div>
+            
+            <div style="margin-bottom: 20px;">
+                <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px; color: #319795;">PAROLE CHIAVE:</div>
+                <div id="keywords" class="keywords-display"></div>
+                <button class="btn-tertiary" onclick="readText('keywords')">🔊 LEGGI PAROLE CHIAVE</button>
+            </div>
+
+            <div>
+                <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px; color: #d68910;">SCHEMA:</div>
+                <div id="schema" class="schema-display"></div>
+                <button class="btn-tertiary" onclick="readText('schema')">🔊 LEGGI SCHEMA</button>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading hidden">
+            ⏳ ELABORAZIONE IN CORSO...
+        </div>
+    </div>
+
+    <script>
+        let currentUtterance = null;
+
+        function openCamera() {
+            document.getElementById('cameraInput').click();
+        }
+
+        document.getElementById('cameraInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const preview = document.getElementById('preview');
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                    
+                    // Start OCR process
+                    processImage(event.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function processImage(imageSrc) {
+            const loading = document.getElementById('loading');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            
+            loading.classList.remove('hidden');
+            progressBar.style.display = 'block';
+            
+            try {
+                const worker = await Tesseract.createWorker('ita', 1, {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            const percent = Math.round(m.progress * 100);
+                            progressFill.style.width = percent + '%';
+                            progressFill.textContent = percent + '%';
+                        }
+                    }
+                });
+
+                const { data: { text } } = await worker.recognize(imageSrc);
+                await worker.terminate();
+
+                // Display extracted text in uppercase
+                const extractedText = text.trim().toUpperCase();
+                document.getElementById('extractedText').textContent = extractedText;
+                document.getElementById('textSection').classList.remove('hidden');
+
+                // Generate study aids
+                generateStudyAids(extractedText);
+
+                loading.classList.add('hidden');
+                progressBar.style.display = 'none';
+                progressFill.style.width = '0%';
+                progressFill.textContent = '0%';
+            } catch (error) {
+                loading.classList.add('hidden');
+                progressBar.style.display = 'none';
+                alert('ERRORE NELL\'ELABORAZIONE DELL\'IMMAGINE. RIPROVA.');
+                console.error(error);
+            }
+        }
+
+        function generateStudyAids(text) {
+            if (!text) return;
+
+            // Extract keywords (words longer than 4 characters, most frequent)
+            const words = text.split(/\s+/).filter(word => word.length > 4);
+            const wordFreq = {};
+            
+            words.forEach(word => {
+                const cleaned = word.replace(/[^\wÀ-ÿ]/gi, '');
+                if (cleaned) {
+                    wordFreq[cleaned] = (wordFreq[cleaned] || 0) + 1;
+                }
+            });
+
+            // Sort by frequency and take top keywords
+            const sortedWords = Object.entries(wordFreq)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8)
+                .map(entry => entry[0]);
+
+            // Display keywords
+            const keywordsDiv = document.getElementById('keywords');
+            keywordsDiv.innerHTML = sortedWords.map(word => 
+                `<span class="keyword-tag">${word}</span>`
+            ).join(' ');
+
+            // Generate schema (split text into main concepts)
+            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+            const schemaDiv = document.getElementById('schema');
+            
+            let schemaHTML = '';
+            sentences.slice(0, 5).forEach((sentence, index) => {
+                const trimmed = sentence.trim();
+                if (trimmed) {
+                    schemaHTML += `<div class="schema-item">${index + 1}. ${trimmed}</div>`;
+                }
+            });
+
+            schemaDiv.innerHTML = schemaHTML || 'NESSUNO SCHEMA DISPONIBILE';
+
+            document.getElementById('studySection').classList.remove('hidden');
+        }
+
+        function readText(elementId) {
+            stopReading();
+
+            const element = document.getElementById(elementId);
+            let textToRead = element.textContent || element.innerText;
+
+            // Clean up text for better reading
+            textToRead = textToRead.replace(/[📖📸🎯🔊⏹️]/g, '').trim();
+
+            if (!textToRead) {
+                alert('NESSUN TESTO DA LEGGERE');
+                return;
+            }
+
+            // Check if speech synthesis is supported
+            if ('speechSynthesis' in window) {
+                currentUtterance = new SpeechSynthesisUtterance(textToRead);
+                currentUtterance.lang = 'it-IT';
+                currentUtterance.rate = 0.9; // Slightly slower for better comprehension
+                currentUtterance.pitch = 1;
+                currentUtterance.volume = 1;
+
+                window.speechSynthesis.speak(currentUtterance);
+            } else {
+                alert('SINTESI VOCALE NON SUPPORTATA SU QUESTO DISPOSITIVO');
+            }
+        }
+
+        function stopReading() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            currentUtterance = null;
+        }
+
+        // Stop reading when page is closed
+        window.addEventListener('beforeunload', stopReading);
+    </script>
+</body>
+</html>
