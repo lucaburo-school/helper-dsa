@@ -21,7 +21,7 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #fff;
             min-height: 100vh;
             padding: 15px;
             color: #000;
@@ -33,31 +33,33 @@
             background: #fff;
             border-radius: 20px;
             padding: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
 
         h1 {
             text-align: center;
-            color: #667eea;
+            color: #000;
             font-size: 28px;
             font-weight: bold;
             text-transform: uppercase;
             margin-bottom: 20px;
             letter-spacing: 2px;
+            border-bottom: 4px solid #000;
+            padding-bottom: 15px;
         }
 
         .section {
             margin-bottom: 25px;
             padding: 15px;
-            background: #f8f9fa;
+            background: #fff;
             border-radius: 15px;
-            border: 2px solid #667eea;
+            border: 3px solid #000;
         }
 
         .section-title {
             font-size: 20px;
             font-weight: bold;
-            color: #667eea;
+            color: #000;
             margin-bottom: 15px;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -69,7 +71,7 @@
             font-size: 18px;
             font-weight: bold;
             text-transform: uppercase;
-            border: none;
+            border: 3px solid #000;
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s;
@@ -79,32 +81,44 @@
         }
 
         .btn-primary {
-            background: #667eea;
-            color: white;
+            background: #000;
+            color: #fff;
         }
 
         .btn-primary:hover, .btn-primary:active {
-            background: #5568d3;
+            background: #333;
             transform: scale(0.98);
         }
 
         .btn-secondary {
-            background: #48bb78;
-            color: white;
+            background: #FFD700;
+            color: #000;
         }
 
         .btn-secondary:hover, .btn-secondary:active {
-            background: #38a169;
+            background: #FFC700;
             transform: scale(0.98);
         }
 
         .btn-tertiary {
-            background: #ed8936;
-            color: white;
+            background: #555;
+            color: #fff;
         }
 
         .btn-tertiary:hover, .btn-tertiary:active {
-            background: #dd6b20;
+            background: #444;
+            transform: scale(0.98);
+        }
+
+        .btn-download {
+            background: #FFD700;
+            color: #000;
+            border: 3px solid #000;
+            margin-top: 10px;
+        }
+
+        .btn-download:hover, .btn-download:active {
+            background: #FFC700;
             transform: scale(0.98);
         }
 
@@ -112,18 +126,46 @@
             display: none;
         }
 
-        #preview {
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .preview-item {
+            position: relative;
+            flex: 1 1 calc(50% - 10px);
+            min-width: 150px;
+        }
+
+        .preview-img {
             width: 100%;
-            max-height: 300px;
+            max-height: 200px;
             object-fit: contain;
             border-radius: 10px;
-            margin-top: 10px;
-            display: none;
-            border: 2px solid #667eea;
+            border: 3px solid #000;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #000;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 0;
+            margin: 0;
         }
 
         .text-display {
-            background: #fffbeb;
+            background: #FFD700;
             border: 3px solid #000;
             border-radius: 10px;
             padding: 20px;
@@ -139,8 +181,8 @@
         }
 
         .keywords-display {
-            background: #e6fffa;
-            border: 3px solid #319795;
+            background: #fff;
+            border: 3px solid #000;
             border-radius: 10px;
             padding: 20px;
             font-size: 20px;
@@ -155,8 +197,8 @@
 
         .keyword-tag {
             display: inline-block;
-            background: #319795;
-            color: white;
+            background: #000;
+            color: #fff;
             padding: 8px 15px;
             margin: 5px;
             border-radius: 20px;
@@ -164,8 +206,8 @@
         }
 
         .schema-display {
-            background: #fef5e7;
-            border: 3px solid #d68910;
+            background: #FFD700;
+            border: 3px solid #000;
             border-radius: 10px;
             padding: 20px;
             margin-top: 15px;
@@ -181,13 +223,13 @@
         .schema-item {
             margin: 10px 0;
             padding-left: 20px;
-            border-left: 5px solid #d68910;
+            border-left: 5px solid #000;
         }
 
         .loading {
             text-align: center;
             font-size: 18px;
-            color: #667eea;
+            color: #000;
             font-weight: bold;
             padding: 20px;
             text-transform: uppercase;
@@ -234,7 +276,8 @@
         .progress-bar {
             width: 100%;
             height: 30px;
-            background: #e2e8f0;
+            background: #fff;
+            border: 3px solid #000;
             border-radius: 15px;
             overflow: hidden;
             margin: 10px 0;
@@ -243,12 +286,12 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #48bb78, #38a169);
+            background: #FFD700;
             transition: width 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: #000;
             font-weight: bold;
             font-size: 14px;
         }
@@ -261,14 +304,15 @@
         <!-- File Input Section -->
         <div class="section">
             <div class="section-title">📁 CARICA FILE</div>
-            <input type="file" id="cameraInput" accept="image/*,application/pdf" capture="environment" style="display: none;">
-            <input type="file" id="fileInput" accept="image/*,application/pdf" style="display: none;">
+            <input type="file" id="cameraInput" accept="image/*,application/pdf" capture="environment" style="display: none;" multiple>
+            <input type="file" id="fileInput" accept="image/*,application/pdf" style="display: none;" multiple>
             <button class="btn-primary" onclick="openCamera()">📸 SCATTA FOTO</button>
             <button class="btn-primary" onclick="openFile()">📄 CARICA IMMAGINE/PDF</button>
-            <img id="preview" alt="Anteprima">
+            <div id="previewContainer" class="preview-container"></div>
             <div id="progressBar" class="progress-bar">
                 <div id="progressFill" class="progress-fill">0%</div>
             </div>
+            <button id="processBtn" class="btn-secondary hidden" onclick="processAllImages()">🔄 ELABORA TUTTE LE IMMAGINI</button>
         </div>
 
         <!-- Extracted Text Section -->
@@ -279,6 +323,7 @@
                 <button class="btn-secondary" onclick="readText('extractedText')">🔊 LEGGI TESTO</button>
                 <button class="btn-secondary" onclick="stopReading()">⏹️ FERMA</button>
             </div>
+            <button class="btn-download" onclick="downloadText('extractedText', 'testo-stampatello.txt')">📥 SCARICA TESTO</button>
         </div>
 
         <!-- Study Aids Section -->
@@ -286,15 +331,17 @@
             <div class="section-title">🎯 SUPPORTO ALLO STUDIO</div>
             
             <div style="margin-bottom: 20px;">
-                <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px; color: #319795;">PAROLE CHIAVE:</div>
+                <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px; color: #000;">PAROLE CHIAVE:</div>
                 <div id="keywords" class="keywords-display"></div>
                 <button class="btn-tertiary" onclick="readText('keywords')">🔊 LEGGI PAROLE CHIAVE</button>
+                <button class="btn-download" onclick="downloadText('keywords', 'parole-chiave.txt')">📥 SCARICA PAROLE CHIAVE</button>
             </div>
 
             <div>
-                <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px; color: #d68910;">SCHEMA:</div>
+                <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px; color: #000;">RIASSUNTO:</div>
                 <div id="schema" class="schema-display"></div>
-                <button class="btn-tertiary" onclick="readText('schema')">🔊 LEGGI SCHEMA</button>
+                <button class="btn-tertiary" onclick="readText('schema')">🔊 LEGGI RIASSUNTO</button>
+                <button class="btn-download" onclick="downloadText('schema', 'riassunto.txt')">📥 SCARICA RIASSUNTO</button>
             </div>
         </div>
 
@@ -306,6 +353,7 @@
 
     <script>
         let currentUtterance = null;
+        let loadedImages = [];
 
         function openCamera() {
             document.getElementById('cameraInput').click();
@@ -315,37 +363,69 @@
             document.getElementById('fileInput').click();
         }
 
-        function handleFileSelection(file) {
-            if (!file) return;
+        function handleFileSelection(files) {
+            if (!files || files.length === 0) return;
 
-            const fileType = file.type;
-            
-            if (fileType === 'application/pdf') {
-                // Handle PDF
-                processPDF(file);
-            } else if (fileType.startsWith('image/')) {
-                // Handle image
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const preview = document.getElementById('preview');
-                    preview.src = event.target.result;
-                    preview.style.display = 'block';
-                    
-                    // Start OCR process
-                    processImage(event.target.result);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                alert('FORMATO FILE NON SUPPORTATO. USA IMMAGINI O PDF.');
+            // Check if there's a PDF in the selection
+            for (let file of files) {
+                if (file.type === 'application/pdf') {
+                    // If PDF found, process only the PDF
+                    processPDF(file);
+                    return;
+                }
             }
+
+            // Otherwise, handle multiple images
+            const previewContainer = document.getElementById('previewContainer');
+            const processBtn = document.getElementById('processBtn');
+            
+            for (let file of files) {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const imageData = event.target.result;
+                        loadedImages.push(imageData);
+                        
+                        // Create preview
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'preview-item';
+                        
+                        const img = document.createElement('img');
+                        img.className = 'preview-img';
+                        img.src = imageData;
+                        
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'remove-image';
+                        removeBtn.textContent = '×';
+                        removeBtn.onclick = function() {
+                            const index = loadedImages.indexOf(imageData);
+                            if (index > -1) {
+                                loadedImages.splice(index, 1);
+                            }
+                            previewItem.remove();
+                            if (loadedImages.length === 0) {
+                                processBtn.classList.add('hidden');
+                            }
+                        };
+                        
+                        previewItem.appendChild(img);
+                        previewItem.appendChild(removeBtn);
+                        previewContainer.appendChild(previewItem);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+            
+            // Show process button
+            processBtn.classList.remove('hidden');
         }
 
         document.getElementById('cameraInput').addEventListener('change', function(e) {
-            handleFileSelection(e.target.files[0]);
+            handleFileSelection(e.target.files);
         });
 
         document.getElementById('fileInput').addEventListener('change', function(e) {
-            handleFileSelection(e.target.files[0]);
+            handleFileSelection(e.target.files);
         });
 
         async function processPDF(file) {
@@ -386,8 +466,9 @@
                 // Generate study aids
                 generateStudyAids(extractedText);
 
-                // Hide preview for PDFs
-                document.getElementById('preview').style.display = 'none';
+                // Clear preview container for PDFs
+                document.getElementById('previewContainer').innerHTML = '';
+                document.getElementById('processBtn').classList.add('hidden');
 
                 loading.classList.add('hidden');
                 progressBar.style.display = 'none';
@@ -401,7 +482,12 @@
             }
         }
 
-        async function processImage(imageSrc) {
+        async function processAllImages() {
+            if (loadedImages.length === 0) {
+                alert('NESSUNA IMMAGINE DA ELABORARE');
+                return;
+            }
+
             const loading = document.getElementById('loading');
             const progressBar = document.getElementById('progressBar');
             const progressFill = document.getElementById('progressFill');
@@ -409,22 +495,33 @@
             loading.classList.remove('hidden');
             progressBar.style.display = 'block';
             
+            let combinedText = '';
+            
             try {
-                const worker = await Tesseract.createWorker('ita', 1, {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            const percent = Math.round(m.progress * 100);
-                            progressFill.style.width = percent + '%';
-                            progressFill.textContent = percent + '%';
+                for (let i = 0; i < loadedImages.length; i++) {
+                    progressFill.style.width = '0%';
+                    progressFill.textContent = `IMMAGINE ${i + 1}/${loadedImages.length}`;
+                    
+                    const worker = await Tesseract.createWorker('ita', 1, {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                const basePercent = (i / loadedImages.length) * 100;
+                                const imagePercent = (m.progress / loadedImages.length) * 100;
+                                const totalPercent = Math.round(basePercent + imagePercent);
+                                progressFill.style.width = totalPercent + '%';
+                                progressFill.textContent = `${totalPercent}% - IMMAGINE ${i + 1}/${loadedImages.length}`;
+                            }
                         }
-                    }
-                });
+                    });
 
-                const { data: { text } } = await worker.recognize(imageSrc);
-                await worker.terminate();
+                    const { data: { text } } = await worker.recognize(loadedImages[i]);
+                    await worker.terminate();
+                    
+                    combinedText += text.trim() + '\n\n';
+                }
 
                 // Display extracted text in uppercase
-                const extractedText = text.trim().toUpperCase();
+                const extractedText = combinedText.trim().toUpperCase();
                 document.getElementById('extractedText').textContent = extractedText;
                 document.getElementById('textSection').classList.remove('hidden');
 
@@ -435,10 +532,13 @@
                 progressBar.style.display = 'none';
                 progressFill.style.width = '0%';
                 progressFill.textContent = '0%';
+                
+                // Hide process button after successful processing
+                document.getElementById('processBtn').classList.add('hidden');
             } catch (error) {
                 loading.classList.add('hidden');
                 progressBar.style.display = 'none';
-                alert('ERRORE NELL\'ELABORAZIONE DELL\'IMMAGINE. RIPROVA.');
+                alert('ERRORE NELL\'ELABORAZIONE DELLE IMMAGINI. RIPROVA.');
                 console.error(error);
             }
         }
@@ -519,6 +619,30 @@
                 window.speechSynthesis.cancel();
             }
             currentUtterance = null;
+        }
+
+        function downloadText(elementId, filename) {
+            const element = document.getElementById(elementId);
+            let textToDownload = element.textContent || element.innerText;
+            
+            // Clean up text
+            textToDownload = textToDownload.replace(/[📖📸🎯🔊⏹️📥]/g, '').trim();
+            
+            if (!textToDownload) {
+                alert('NESSUN TESTO DA SCARICARE');
+                return;
+            }
+            
+            // Create download link
+            const blob = new Blob([textToDownload], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
 
         // Stop reading when page is closed
