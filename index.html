@@ -6,6 +6,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <title>ASSISTENTE DI LETTURA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
@@ -20,7 +23,7 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Roboto Mono', monospace;
             background: #fff;
             min-height: 100vh;
             padding: 15px;
@@ -40,7 +43,7 @@
             text-align: center;
             color: #000;
             font-size: 28px;
-            font-weight: bold;
+            font-weight: 600;
             text-transform: uppercase;
             margin-bottom: 20px;
             letter-spacing: 2px;
@@ -58,7 +61,7 @@
 
         .section-title {
             font-size: 20px;
-            font-weight: bold;
+            font-weight: 600;
             color: #000;
             margin-bottom: 15px;
             text-transform: uppercase;
@@ -69,7 +72,7 @@
             width: 100%;
             padding: 18px;
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 600;
             text-transform: uppercase;
             border: 3px solid #000;
             border-radius: 12px;
@@ -159,7 +162,7 @@
             height: 30px;
             cursor: pointer;
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 600;
             padding: 0;
             margin: 0;
         }
@@ -171,9 +174,9 @@
             padding: 20px;
             font-size: 22px;
             line-height: 1.8;
-            font-weight: bold;
+            font-weight: 400;
             text-transform: uppercase;
-            font-family: 'Comic Sans MS', 'Arial Black', sans-serif;
+            font-family: 'Roboto Mono', monospace;
             color: #000;
             min-height: 150px;
             word-wrap: break-word;
@@ -187,9 +190,9 @@
             padding: 20px;
             font-size: 20px;
             line-height: 1.8;
-            font-weight: bold;
+            font-weight: 400;
             text-transform: uppercase;
-            font-family: 'Comic Sans MS', 'Arial Black', sans-serif;
+            font-family: 'Roboto Mono', monospace;
             color: #000;
             min-height: 100px;
             letter-spacing: 1.5px;
@@ -203,6 +206,7 @@
             margin: 5px;
             border-radius: 20px;
             font-size: 18px;
+            font-weight: 600;
         }
 
         .schema-display {
@@ -213,9 +217,9 @@
             margin-top: 15px;
             font-size: 18px;
             line-height: 1.8;
-            font-weight: bold;
+            font-weight: 400;
             text-transform: uppercase;
-            font-family: 'Comic Sans MS', 'Arial Black', sans-serif;
+            font-family: 'Roboto Mono', monospace;
             color: #000;
             letter-spacing: 1.5px;
         }
@@ -230,7 +234,7 @@
             text-align: center;
             font-size: 18px;
             color: #000;
-            font-weight: bold;
+            font-weight: 600;
             padding: 20px;
             text-transform: uppercase;
         }
@@ -292,7 +296,7 @@
             align-items: center;
             justify-content: center;
             color: #000;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 14px;
         }
     </style>
