@@ -531,7 +531,7 @@
         // Call Gemini Vision API for image OCR
         async function callGeminiVision(imageBase64) {
             if (!geminiApiKey) {
-                throw new Error('API key not configured');
+                throw new Error('CHIAVE API NON CONFIGURATA');
             }
 
             // Remove data URL prefix if present
@@ -560,11 +560,30 @@
             });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error('Gemini Vision API error: ' + errorText);
+                const errorData = await response.json().catch(() => null);
+                let errorMessage = 'ERRORE API GEMINI: ';
+                
+                if (response.status === 400) {
+                    errorMessage += 'RICHIESTA NON VALIDA. Verifica la chiave API.';
+                } else if (response.status === 403) {
+                    errorMessage += 'CHIAVE API NON VALIDA o QUOTA SUPERATA. Verifica su Google AI Studio.';
+                } else if (response.status === 429) {
+                    errorMessage += 'TROPPE RICHIESTE. Attendi qualche secondo e riprova.';
+                } else if (response.status === 500) {
+                    errorMessage += 'ERRORE SERVER GOOGLE. Riprova tra qualche minuto.';
+                } else {
+                    errorMessage += `Codice ${response.status}. ${errorData?.error?.message || 'Errore sconosciuto'}`;
+                }
+                
+                throw new Error(errorMessage);
             }
 
             const data = await response.json();
+            
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                throw new Error('RISPOSTA API NON VALIDA. L\'immagine potrebbe essere troppo grande o non leggibile.');
+            }
+            
             return data.candidates[0].content.parts[0].text;
         }
 
@@ -829,8 +848,24 @@
             } catch (error) {
                 loading.classList.add('hidden');
                 progressBar.style.display = 'none';
-                alert('ERRORE NELL\'ELABORAZIONE DELLE IMMAGINI. RIPROVA.');
-                console.error(error);
+                
+                // Show detailed error message
+                let errorMessage = 'ERRORE ELABORAZIONE IMMAGINI:\n\n';
+                errorMessage += error.message || error.toString();
+                errorMessage += '\n\n';
+                
+                if (error.message && error.message.includes('CHIAVE API')) {
+                    errorMessage += 'SOLUZIONE: Clicca l\'icona ⚙️ e inserisci/verifica la chiave API Google Gemini.';
+                } else if (error.message && error.message.includes('QUOTA')) {
+                    errorMessage += 'SOLUZIONE: Hai superato la quota gratuita. Attendi o verifica su Google AI Studio.';
+                } else if (error.message && error.message.includes('TROPPE RICHIESTE')) {
+                    errorMessage += 'SOLUZIONE: Attendi 30 secondi e riprova.';
+                } else {
+                    errorMessage += 'SOLUZIONE: Verifica la connessione internet e la validità della chiave API.';
+                }
+                
+                alert(errorMessage);
+                console.error('Dettagli errore:', error);
             }
         }
 
