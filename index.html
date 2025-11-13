@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
@@ -308,8 +309,8 @@
         <!-- File Input Section -->
         <div class="section">
             <div class="section-title">📁 CARICA FILE</div>
-            <input type="file" id="cameraInput" accept="image/*,application/pdf" capture="environment" style="display: none;" multiple>
-            <input type="file" id="fileInput" accept="image/*,application/pdf" style="display: none;" multiple>
+            <input type="file" id="cameraInput" accept="image/*,.heic,.heif,application/pdf" capture="environment" style="display: none;" multiple>
+            <input type="file" id="fileInput" accept="image/*,.heic,.heif,application/pdf" style="display: none;" multiple>
             <button class="btn-primary" onclick="openCamera()">📸 SCATTA FOTO</button>
             <button class="btn-primary" onclick="openFile()">📄 CARICA IMMAGINE/PDF</button>
             <div id="previewContainer" class="preview-container"></div>
@@ -367,7 +368,22 @@
             document.getElementById('fileInput').click();
         }
 
-        function handleFileSelection(files) {
+        // Convert HEIC to JPEG
+        async function convertHeicToJpeg(file) {
+            try {
+                const convertedBlob = await heic2any({
+                    blob: file,
+                    toType: 'image/jpeg',
+                    quality: 0.9
+                });
+                return convertedBlob;
+            } catch (error) {
+                console.error('Error converting HEIC:', error);
+                throw error;
+            }
+        }
+
+        async function handleFileSelection(files) {
             if (!files || files.length === 0) return;
 
             // Check if there's a PDF in the selection
@@ -384,39 +400,61 @@
             const processBtn = document.getElementById('processBtn');
             
             for (let file of files) {
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const imageData = event.target.result;
-                        loadedImages.push(imageData);
+                const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+                const isImage = file.type.startsWith('image/') || isHeic;
+                
+                if (isImage) {
+                    try {
+                        let fileToProcess = file;
                         
-                        // Create preview
-                        const previewItem = document.createElement('div');
-                        previewItem.className = 'preview-item';
+                        // Convert HEIC to JPEG if needed
+                        if (isHeic) {
+                            const progressFill = document.getElementById('progressFill');
+                            const progressBar = document.getElementById('progressBar');
+                            progressBar.style.display = 'block';
+                            progressFill.textContent = 'CONVERSIONE HEIC...';
+                            
+                            fileToProcess = await convertHeicToJpeg(file);
+                            
+                            progressBar.style.display = 'none';
+                        }
                         
-                        const img = document.createElement('img');
-                        img.className = 'preview-img';
-                        img.src = imageData;
-                        
-                        const removeBtn = document.createElement('button');
-                        removeBtn.className = 'remove-image';
-                        removeBtn.textContent = '×';
-                        removeBtn.onclick = function() {
-                            const index = loadedImages.indexOf(imageData);
-                            if (index > -1) {
-                                loadedImages.splice(index, 1);
-                            }
-                            previewItem.remove();
-                            if (loadedImages.length === 0) {
-                                processBtn.classList.add('hidden');
-                            }
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            const imageData = event.target.result;
+                            loadedImages.push(imageData);
+                            
+                            // Create preview
+                            const previewItem = document.createElement('div');
+                            previewItem.className = 'preview-item';
+                            
+                            const img = document.createElement('img');
+                            img.className = 'preview-img';
+                            img.src = imageData;
+                            
+                            const removeBtn = document.createElement('button');
+                            removeBtn.className = 'remove-image';
+                            removeBtn.textContent = '×';
+                            removeBtn.onclick = function() {
+                                const index = loadedImages.indexOf(imageData);
+                                if (index > -1) {
+                                    loadedImages.splice(index, 1);
+                                }
+                                previewItem.remove();
+                                if (loadedImages.length === 0) {
+                                    processBtn.classList.add('hidden');
+                                }
+                            };
+                            
+                            previewItem.appendChild(img);
+                            previewItem.appendChild(removeBtn);
+                            previewContainer.appendChild(previewItem);
                         };
-                        
-                        previewItem.appendChild(img);
-                        previewItem.appendChild(removeBtn);
-                        previewContainer.appendChild(previewItem);
-                    };
-                    reader.readAsDataURL(file);
+                        reader.readAsDataURL(fileToProcess);
+                    } catch (error) {
+                        alert('ERRORE NELLA CONVERSIONE DEL FILE HEIC. RIPROVA.');
+                        console.error(error);
+                    }
                 }
             }
             
