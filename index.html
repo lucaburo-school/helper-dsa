@@ -486,6 +486,45 @@
             }
         }
 
+        // Pre-process image for better OCR
+        function preprocessImage(imageSrc) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Draw original image
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Get image data
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    
+                    // Apply preprocessing: increase contrast and convert to grayscale
+                    for (let i = 0; i < data.length; i += 4) {
+                        // Convert to grayscale
+                        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                        
+                        // Increase contrast (threshold)
+                        const threshold = 128;
+                        const value = avg > threshold ? 255 : 0;
+                        
+                        data[i] = value;     // Red
+                        data[i + 1] = value; // Green
+                        data[i + 2] = value; // Blue
+                    }
+                    
+                    ctx.putImageData(imageData, 0, 0);
+                    resolve(canvas.toDataURL());
+                };
+                img.src = imageSrc;
+            });
+        }
+
         async function processAllImages() {
             if (loadedImages.length === 0) {
                 alert('NESSUNA IMMAGINE DA ELABORARE');
@@ -504,7 +543,10 @@
             try {
                 for (let i = 0; i < loadedImages.length; i++) {
                     progressFill.style.width = '0%';
-                    progressFill.textContent = `IMMAGINE ${i + 1}/${loadedImages.length}`;
+                    progressFill.textContent = `ELABORAZIONE ${i + 1}/${loadedImages.length}`;
+                    
+                    // Preprocess image
+                    const processedImage = await preprocessImage(loadedImages[i]);
                     
                     const worker = await Tesseract.createWorker('ita', 1, {
                         logger: m => {
@@ -517,20 +559,35 @@
                             }
                         }
                     });
+                    
+                    // Configure Tesseract for better Italian recognition
+                    await worker.setParameters({
+                        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
+                        preserve_interword_spaces: '1',
+                    });
 
-                    const { data: { text } } = await worker.recognize(loadedImages[i]);
+                    const { data: { text } } = await worker.recognize(processedImage);
                     await worker.terminate();
                     
                     combinedText += text.trim() + '\n\n';
                 }
 
+                // Post-process and clean extracted text
+                let cleanedText = combinedText.trim();
+                
+                // Fix common OCR errors
+                cleanedText = cleanedText
+                    .replace(/([a-zàèéìòù])- ([a-zàèéìòù])/gi, '$1$2') // Fix hyphenated words
+                    .replace(/\s+/g, ' ') // Normalize spaces
+                    .replace(/([.!?])([A-ZÀÈÉÌÒÙ])/g, '$1 $2'); // Add space after punctuation
+                
                 // Display extracted text in uppercase
-                const extractedText = combinedText.trim().toUpperCase();
+                const extractedText = cleanedText.toUpperCase();
                 document.getElementById('extractedText').textContent = extractedText;
                 document.getElementById('textSection').classList.remove('hidden');
 
                 // Generate study aids
-                generateStudyAids(extractedText);
+                generateStudyAids(cleanedText);
 
                 loading.classList.add('hidden');
                 progressBar.style.display = 'none';
@@ -550,13 +607,29 @@
         function generateStudyAids(text) {
             if (!text) return;
 
-            // Extract keywords (words longer than 4 characters, most frequent)
-            const words = text.split(/\s+/).filter(word => word.length > 4);
+            // Italian stop words to exclude
+            const stopWords = new Set([
+                'il', 'lo', 'la', 'i', 'gli', 'le', 'un', 'uno', 'una',
+                'di', 'a', 'da', 'in', 'con', 'su', 'per', 'tra', 'fra',
+                'e', 'o', 'ma', 'se', 'che', 'chi', 'cui', 'questo', 'quello',
+                'suo', 'sua', 'suoi', 'sue', 'mio', 'mia', 'miei', 'mie',
+                'del', 'della', 'dello', 'dei', 'degli', 'delle',
+                'al', 'alla', 'allo', 'ai', 'agli', 'alle',
+                'dal', 'dalla', 'dallo', 'dai', 'dagli', 'dalle',
+                'nel', 'nella', 'nello', 'nei', 'negli', 'nelle',
+                'sul', 'sulla', 'sullo', 'sui', 'sugli', 'sulle',
+                'è', 'sono', 'era', 'erano', 'sia', 'stato', 'stata',
+                'più', 'meno', 'molto', 'poco', 'tanto', 'quanto',
+                'come', 'dove', 'quando', 'perché', 'quale', 'quali'
+            ]);
+
+            // Extract keywords (words longer than 4 characters, excluding stop words)
+            const words = text.toLowerCase().split(/\s+/);
             const wordFreq = {};
             
             words.forEach(word => {
-                const cleaned = word.replace(/[^\wÀ-ÿ]/gi, '');
-                if (cleaned) {
+                const cleaned = word.replace(/[^\wàèéìòù]/gi, '');
+                if (cleaned.length > 4 && !stopWords.has(cleaned)) {
                     wordFreq[cleaned] = (wordFreq[cleaned] || 0) + 1;
                 }
             });
@@ -564,28 +637,49 @@
             // Sort by frequency and take top keywords
             const sortedWords = Object.entries(wordFreq)
                 .sort((a, b) => b[1] - a[1])
-                .slice(0, 8)
-                .map(entry => entry[0]);
+                .slice(0, 10)
+                .map(entry => entry[0].toUpperCase());
 
             // Display keywords
             const keywordsDiv = document.getElementById('keywords');
-            keywordsDiv.innerHTML = sortedWords.map(word => 
-                `<span class="keyword-tag">${word}</span>`
-            ).join(' ');
+            if (sortedWords.length > 0) {
+                keywordsDiv.innerHTML = sortedWords.map(word => 
+                    `<span class="keyword-tag">${word}</span>`
+                ).join(' ');
+            } else {
+                keywordsDiv.innerHTML = 'NESSUNA PAROLA CHIAVE TROVATA';
+            }
 
-            // Generate schema (split text into main concepts)
-            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+            // Generate intelligent summary
+            const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 20);
             const schemaDiv = document.getElementById('schema');
             
-            let schemaHTML = '';
-            sentences.slice(0, 5).forEach((sentence, index) => {
-                const trimmed = sentence.trim();
-                if (trimmed) {
-                    schemaHTML += `<div class="schema-item">${index + 1}. ${trimmed}</div>`;
+            if (sentences.length === 0) {
+                schemaDiv.innerHTML = 'TESTO TROPPO BREVE PER GENERARE UN RIASSUNTO';
+            } else {
+                // Select most important sentences (first, middle, last for context)
+                const numSentences = Math.min(sentences.length, 8);
+                const selectedSentences = [];
+                
+                if (sentences.length <= 8) {
+                    selectedSentences.push(...sentences);
+                } else {
+                    // Take first 3, some from middle, and last 2
+                    selectedSentences.push(...sentences.slice(0, 3));
+                    const middleStart = Math.floor(sentences.length / 2) - 1;
+                    selectedSentences.push(...sentences.slice(middleStart, middleStart + 2));
+                    selectedSentences.push(...sentences.slice(-3));
                 }
-            });
-
-            schemaDiv.innerHTML = schemaHTML || 'NESSUNO SCHEMA DISPONIBILE';
+                
+                let schemaHTML = '';
+                selectedSentences.forEach((sentence, index) => {
+                    // Capitalize first letter
+                    const formatted = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+                    schemaHTML += `<div class="schema-item">• ${formatted}.</div>`;
+                });
+                
+                schemaDiv.innerHTML = schemaHTML;
+            }
 
             document.getElementById('studySection').classList.remove('hidden');
         }
