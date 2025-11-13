@@ -300,11 +300,111 @@
             font-weight: 600;
             font-size: 14px;
         }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border: 3px solid #000;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-content h2 {
+            color: #000;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        .modal-content p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-family: 'Roboto Mono', monospace;
+            border: 3px solid #000;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .modal-content a {
+            color: #000;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+
+        .ai-badge {
+            display: inline-block;
+            background: #FFD700;
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .settings-icon {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #000;
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            z-index: 100;
+        }
     </style>
 </head>
 <body>
+    <!-- Settings Icon -->
+    <div class="settings-icon" onclick="openSettings()" title="Impostazioni API">⚙️</div>
+
+    <!-- API Key Modal -->
+    <div id="apiModal" class="modal">
+        <div class="modal-content">
+            <h2>🤖 Configurazione Google Gemini AI</h2>
+            <p>Per migliorare drasticamente la qualità OCR e dei riassunti, inserisci la tua chiave API gratuita di Google Gemini.</p>
+            <p><strong>Come ottenerla:</strong></p>
+            <ol style="margin-left: 20px; margin-bottom: 15px;">
+                <li>Vai su <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></li>
+                <li>Fai login con Google</li>
+                <li>Clicca "Create API Key"</li>
+                <li>Copia e incolla la chiave qui sotto</li>
+            </ol>
+            <input type="text" id="apiKeyInput" placeholder="Incolla qui la tua chiave API..." />
+            <button class="btn-secondary" onclick="saveApiKey()">💾 SALVA CHIAVE</button>
+            <button class="btn-tertiary" onclick="closeSettings()">❌ CHIUDI</button>
+            <p style="margin-top: 15px; font-size: 12px; color: #555;">La chiave viene salvata solo nel tuo browser, non viene condivisa.</p>
+        </div>
+    </div>
+
     <div class="container">
-        <h1>📚 ASSISTENTE DI LETTURA</h1>
+        <h1>📚 ASSISTENTE DI LETTURA<span class="ai-badge" id="aiBadge">AI OFF</span></h1>
 
         <!-- File Input Section -->
         <div class="section">
@@ -359,6 +459,74 @@
     <script>
         let currentUtterance = null;
         let loadedImages = [];
+        let geminiApiKey = localStorage.getItem('geminiApiKey') || '';
+
+        // Check if API key exists on load
+        window.addEventListener('DOMContentLoaded', function() {
+            if (!geminiApiKey) {
+                document.getElementById('apiModal').style.display = 'flex';
+            } else {
+                document.getElementById('aiBadge').textContent = 'AI ON';
+                document.getElementById('aiBadge').style.background = '#4CAF50';
+                document.getElementById('aiBadge').style.color = '#fff';
+            }
+        });
+
+        function openSettings() {
+            document.getElementById('apiKeyInput').value = geminiApiKey;
+            document.getElementById('apiModal').style.display = 'flex';
+        }
+
+        function closeSettings() {
+            if (geminiApiKey) {
+                document.getElementById('apiModal').style.display = 'none';
+            } else {
+                alert('DEVI INSERIRE UNA CHIAVE API PER USARE L\'APP');
+            }
+        }
+
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                alert('INSERISCI UNA CHIAVE API VALIDA');
+                return;
+            }
+            geminiApiKey = apiKey;
+            localStorage.setItem('geminiApiKey', apiKey);
+            document.getElementById('aiBadge').textContent = 'AI ON';
+            document.getElementById('aiBadge').style.background = '#4CAF50';
+            document.getElementById('aiBadge').style.color = '#fff';
+            document.getElementById('apiModal').style.display = 'none';
+            alert('✅ CHIAVE API SALVATA! L\'AI È ORA ATTIVA.');
+        }
+
+        // Call Gemini AI API
+        async function callGeminiAI(prompt) {
+            if (!geminiApiKey) {
+                throw new Error('API key not configured');
+            }
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Gemini API error: ' + response.statusText);
+            }
+
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        }
 
         function openCamera() {
             document.getElementById('cameraInput').click();
@@ -619,13 +787,28 @@
                     .replace(/\s+/g, ' ') // Normalize spaces
                     .replace(/([.!?])([A-ZÀÈÉÌÒÙ])/g, '$1 $2'); // Add space after punctuation
                 
+                // Use AI to improve text if API key is available
+                if (geminiApiKey) {
+                    progressFill.textContent = 'CORREZIONE AI IN CORSO...';
+                    try {
+                        const aiPrompt = `Sei un assistente per studenti con DSA. Correggi gli errori OCR nel seguente testo italiano, mantenendo il significato originale. Restituisci SOLO il testo corretto, senza commenti o spiegazioni:
+
+${cleanedText}`;
+                        
+                        cleanedText = await callGeminiAI(aiPrompt);
+                    } catch (error) {
+                        console.error('AI correction error:', error);
+                        // Continue with uncorrected text if AI fails
+                    }
+                }
+                
                 // Display extracted text in uppercase
                 const extractedText = cleanedText.toUpperCase();
                 document.getElementById('extractedText').textContent = extractedText;
                 document.getElementById('textSection').classList.remove('hidden');
 
-                // Generate study aids
-                generateStudyAids(cleanedText);
+                // Generate study aids with AI
+                await generateStudyAidsWithAI(cleanedText);
 
                 loading.classList.add('hidden');
                 progressBar.style.display = 'none';
@@ -642,7 +825,60 @@
             }
         }
 
-        function generateStudyAids(text) {
+        async function generateStudyAidsWithAI(text) {
+            if (!text) return;
+
+            const keywordsDiv = document.getElementById('keywords');
+            const schemaDiv = document.getElementById('schema');
+
+            if (geminiApiKey) {
+                // Use AI for intelligent keywords and summary
+                try {
+                    // Generate keywords with AI
+                    const keywordsPrompt = `Analizza questo testo italiano ed estrai le 10 parole chiave più importanti (nomi propri, concetti chiave). Restituisci SOLO le parole separate da virgola, in maiuscolo:
+
+${text}`;
+                    
+                    const keywordsResponse = await callGeminiAI(keywordsPrompt);
+                    const keywords = keywordsResponse.split(',').map(k => k.trim()).filter(k => k.length > 0).slice(0, 10);
+                    
+                    keywordsDiv.innerHTML = keywords.map(word => 
+                        `<span class="keyword-tag">${word}</span>`
+                    ).join(' ');
+
+                    // Generate summary with AI
+                    const summaryPrompt = `Crea un riassunto di questo testo italiano in massimo 8 frasi complete. Ogni frase deve essere chiara e comprensibile per studenti con DSA. Usa bullet point (•) all'inizio di ogni frase:
+
+${text}`;
+                    
+                    const summaryResponse = await callGeminiAI(summaryPrompt);
+                    const summaryLines = summaryResponse.split('\n').filter(line => line.trim().length > 0);
+                    
+                    let schemaHTML = '';
+                    summaryLines.forEach(line => {
+                        const formatted = line.replace(/^[•\-*]\s*/, '').trim();
+                        if (formatted) {
+                            schemaHTML += `<div class="schema-item">• ${formatted}</div>`;
+                        }
+                    });
+                    
+                    schemaDiv.innerHTML = schemaHTML || 'ERRORE GENERAZIONE RIASSUNTO';
+
+                } catch (error) {
+                    console.error('AI generation error:', error);
+                    // Fallback to basic method
+                    generateStudyAidsBasic(text);
+                    return;
+                }
+            } else {
+                // Use basic method without AI
+                generateStudyAidsBasic(text);
+            }
+
+            document.getElementById('studySection').classList.remove('hidden');
+        }
+
+        function generateStudyAidsBasic(text) {
             if (!text) return;
 
             // Italian stop words to exclude
