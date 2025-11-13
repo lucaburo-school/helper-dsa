@@ -500,7 +500,7 @@
             alert('✅ CHIAVE API SALVATA! L\'AI È ORA ATTIVA.');
         }
 
-        // Call Gemini AI API
+        // Call Gemini AI API for text
         async function callGeminiAI(prompt) {
             if (!geminiApiKey) {
                 throw new Error('API key not configured');
@@ -522,6 +522,46 @@
 
             if (!response.ok) {
                 throw new Error('Gemini API error: ' + response.statusText);
+            }
+
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        }
+
+        // Call Gemini Vision API for image OCR
+        async function callGeminiVision(imageBase64) {
+            if (!geminiApiKey) {
+                throw new Error('API key not configured');
+            }
+
+            // Remove data URL prefix if present
+            const base64Data = imageBase64.split(',')[1] || imageBase64;
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            {
+                                text: "Estrai TUTTO il testo visibile in questa immagine. Trascrivi il testo esattamente come appare, mantenendo la formattazione e l'ordine. Se ci sono errori di stampa o testo poco chiaro, fai del tuo meglio per interpretarlo correttamente. Restituisci SOLO il testo estratto, senza commenti o spiegazioni."
+                            },
+                            {
+                                inline_data: {
+                                    mime_type: "image/jpeg",
+                                    data: base64Data
+                                }
+                            }
+                        ]
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error('Gemini Vision API error: ' + errorText);
             }
 
             const data = await response.json();
@@ -737,6 +777,12 @@
                 return;
             }
 
+            if (!geminiApiKey) {
+                alert('CONFIGURA LA CHIAVE API GOOGLE GEMINI PER USARE L\'OCR AI');
+                openSettings();
+                return;
+            }
+
             const loading = document.getElementById('loading');
             const progressBar = document.getElementById('progressBar');
             const progressFill = document.getElementById('progressFill');
@@ -748,59 +794,22 @@
             
             try {
                 for (let i = 0; i < loadedImages.length; i++) {
-                    progressFill.style.width = '0%';
-                    progressFill.textContent = `ELABORAZIONE ${i + 1}/${loadedImages.length}`;
+                    const percent = Math.round(((i + 1) / loadedImages.length) * 100);
+                    progressFill.style.width = percent + '%';
+                    progressFill.textContent = `AI OCR ${i + 1}/${loadedImages.length}...`;
                     
-                    // Preprocess image
-                    const processedImage = await preprocessImage(loadedImages[i]);
-                    
-                    const worker = await Tesseract.createWorker('ita', 1, {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                const basePercent = (i / loadedImages.length) * 100;
-                                const imagePercent = (m.progress / loadedImages.length) * 100;
-                                const totalPercent = Math.round(basePercent + imagePercent);
-                                progressFill.style.width = totalPercent + '%';
-                                progressFill.textContent = `${totalPercent}% - IMMAGINE ${i + 1}/${loadedImages.length}`;
-                            }
-                        }
-                    });
-                    
-                    // Configure Tesseract for better Italian recognition
-                    await worker.setParameters({
-                        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
-                        preserve_interword_spaces: '1',
-                    });
-
-                    const { data: { text } } = await worker.recognize(processedImage);
-                    await worker.terminate();
-                    
+                    // Use Gemini Vision for OCR
+                    const text = await callGeminiVision(loadedImages[i]);
                     combinedText += text.trim() + '\n\n';
                 }
 
-                // Post-process and clean extracted text
+                // Clean extracted text
                 let cleanedText = combinedText.trim();
                 
-                // Fix common OCR errors
+                // Basic cleanup
                 cleanedText = cleanedText
-                    .replace(/([a-zàèéìòù])- ([a-zàèéìòù])/gi, '$1$2') // Fix hyphenated words
                     .replace(/\s+/g, ' ') // Normalize spaces
                     .replace(/([.!?])([A-ZÀÈÉÌÒÙ])/g, '$1 $2'); // Add space after punctuation
-                
-                // Use AI to improve text if API key is available
-                if (geminiApiKey) {
-                    progressFill.textContent = 'CORREZIONE AI IN CORSO...';
-                    try {
-                        const aiPrompt = `Sei un assistente per studenti con DSA. Correggi gli errori OCR nel seguente testo italiano, mantenendo il significato originale. Restituisci SOLO il testo corretto, senza commenti o spiegazioni:
-
-${cleanedText}`;
-                        
-                        cleanedText = await callGeminiAI(aiPrompt);
-                    } catch (error) {
-                        console.error('AI correction error:', error);
-                        // Continue with uncorrected text if AI fails
-                    }
-                }
                 
                 // Display extracted text in uppercase
                 const extractedText = cleanedText.toUpperCase();
